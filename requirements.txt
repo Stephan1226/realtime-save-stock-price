@@ -1,0 +1,7 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+yfinance==0.2.18
+pymysql==1.1.0
+pytz==2023.3
+asyncio-mqtt==0.16.1
+python-multipart==0.0.6 
