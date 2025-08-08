@@ -118,6 +118,43 @@ class DatabaseManager:
             logger.error(f"데이터 조회 실패: {e}")
             return []
 
+    def get_price_history(
+        self, symbols: Optional[List[str]] = None, limit: int = 100
+    ) -> List[dict]:
+        """
+        최근 주가 히스토리 조회 (전체 또는 특정 심볼)
+        최근 timestamp 기준 내림차순 정렬
+
+        Args:
+            symbols: 조회할 심볼 리스트 (None이면 전체)
+            limit: 반환할 최대 행 수(전체 기준)
+        """
+        try:
+            with self.connection.cursor(pymysql.cursors.DictCursor) as cursor:
+                if symbols:
+                    placeholders = ','.join(['%s'] * len(symbols))
+                    sql = f"""
+                    SELECT symbol, price, timestamp
+                    FROM stock_prices
+                    WHERE symbol IN ({placeholders})
+                    ORDER BY timestamp DESC
+                    LIMIT %s
+                    """
+                    params = symbols + [limit]
+                    cursor.execute(sql, params)
+                else:
+                    sql = """
+                    SELECT symbol, price, timestamp
+                    FROM stock_prices
+                    ORDER BY timestamp DESC
+                    LIMIT %s
+                    """
+                    cursor.execute(sql, (limit,))
+                return cursor.fetchall()
+        except Exception as e:
+            logger.error(f"히스토리 조회 실패: {e}")
+            return []
+
 
 # 전역 데이터베이스 매니저 인스턴스
 db_manager = DatabaseManager() 

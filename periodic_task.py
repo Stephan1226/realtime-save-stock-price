@@ -25,8 +25,8 @@ class PeriodicTaskManager:
     
     async def periodic_data_collection(self):
         """
-        10초 간격으로 주식 데이터를 수집하는 주기적 작업
-        정확히 10초 주기를 유지하며 사이클 소요 시간을 측정
+        60초 간격으로 주식 데이터를 수집하는 주기적 작업
+        설정된 간격(DATA_COLLECTION_INTERVAL=60초)을 유지하며 사이클 소요 시간을 측정
         """
         self.is_running = True
         self.start_time = datetime.now()
@@ -42,7 +42,10 @@ class PeriodicTaskManager:
                 logger.info(f"사이클 {self.cycle_count} 시작 - 시장 상태: {market_status}")
                 
                 # 데이터 수집 및 저장
-                success = await stock_collector.collect_and_save()
+                # 장 여부와 무관하게 미리 정한 종목만 강제 수집
+                success = await stock_collector.collect_and_save(
+                    force_all_symbols=True
+                )
                 
                 if success:
                     logger.info(f"사이클 {self.cycle_count} 완료")

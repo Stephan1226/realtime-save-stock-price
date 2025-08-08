@@ -1,7 +1,9 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-yfinance==0.2.18
+yfinance==0.2.65
 pymysql==1.1.0
 pytz==2023.3
 asyncio-mqtt==0.16.1
-python-multipart==0.0.6 
+python-multipart==0.0.6
+requests>=2.31.0
+urllib3>=2.2.0

@@ -11,6 +11,8 @@ from config import API_HOST, API_PORT
 from database import db_manager
 from market_utils import get_market_status, get_active_symbols
 from periodic_task import task_manager
+from stock_data_collector import stock_collector
+from config import TARGET_SYMBOLS
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -112,6 +114,45 @@ async def get_latest_prices(symbols: Optional[str] = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/prices/history")
+async def get_price_history(symbols: Optional[str] = None, limit: int = 200):
+    """
+    최근 주가 히스토리 조회
+    """
+    try:
+        symbol_list = None
+        if symbols:
+            symbol_list = [s.strip() for s in symbols.split(",")]
+
+        history = db_manager.get_price_history(symbol_list, limit=limit)
+        return {
+            "history": history,
+            "count": len(history),
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"히스토리 조회 중 오류: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/collect/now")
+async def collect_now(force_all_symbols: bool = True):
+    """
+    즉시 데이터 수집 실행 (기본: 모든 심볼 강제 수집)
+    """
+    try:
+        success = await stock_collector.collect_and_save(
+            force_all_symbols=force_all_symbols
+        )
+        return {
+            "success": success,
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"즉시 수집 중 오류: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/symbols")
 async def get_symbols():
     """등록된 모든 심볼 조회 엔드포인트"""
@@ -120,8 +161,10 @@ async def get_symbols():
         
         return {
             "symbols": list(SYMBOL_MARKET.keys()),
+            "target_symbols": TARGET_SYMBOLS,
             "markets": list(set(SYMBOL_MARKET.values())),
-            "total_count": len(SYMBOL_MARKET)
+            "total_count": len(SYMBOL_MARKET),
+            "target_count": len(TARGET_SYMBOLS)
         }
     except Exception as e:
         logger.error(f"심볼 조회 중 오류: {e}")
